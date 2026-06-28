@@ -1,6 +1,7 @@
 # Atelier
 
 <!-- deno-fmt-ignore -->
+
 > [!Caution]
 > Be careful if you want to use Atelier in private repositories (it can get expensive very quickly)!
 > See [GitHub Actions pricing page](https://docs.github.com/en/billing/concepts/product-billing/github-actions) for details.
@@ -276,6 +277,10 @@ A custom `install-command` runs on a fresh runner, so it must be non-interactive
 and install a working multi-user daemon. Atelier reloads the daemon after
 applying its configuration. If your installer does not set one up, the build
 settings will not take effect.
+
+## Hooks
+
+For each stage (`build`, `push-to-cache`)
 
 ### Fork it (alternative)
 

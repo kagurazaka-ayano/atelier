@@ -53,6 +53,46 @@ on:
         description: Extra nix.conf lines appended after the required settings
         type: string
         default: ""
+      pre-discovery:
+        description: Script to be run before running config discovery
+        required: false
+        default: ""
+        type: string
+      post-discovery:
+        description: Script to be run after running config discovery
+        required: false
+        default: ""
+        type: string
+      pre-run:
+        description: Script to be executed before all run except for eval failed tasks
+        required: false
+        default: ""
+        type: string
+      post-run:
+        description: Script to be executed after all steps are done
+        required: false
+        default: ""
+        type: string
+      pre-build:
+        description: Script to be executed before every build job
+        required: false
+        default: ""
+        type: string
+      post-build:
+        description: Script to be executed after done building
+        required: false
+        default: ""
+        type: string
+      pre-cache:
+        description: Script to be executed before pushing to cache
+        required: false
+        default: ""
+        type: string
+      post-cache:
+        description: Script to be executed after done pushing to cache
+        required: false
+        default: ""
+        type: string
   # downstream repos consume atelier by calling this workflow; the inputs mirror
   # workflow_dispatch so the generate step reads them the same way
   workflow_call:
@@ -133,6 +173,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Pre-discovery hook
+        id: pre-discovery
+        if: ${{ inputs.pre-discovery != '' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.pre-discovery }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
       - name: Set Up Nix
         uses: jenseng/dynamic-uses@d683d56bffbc1f36158989b5fc62288697aae27b # 2025-12-18
         with:
@@ -179,7 +228,15 @@ jobs:
 
           nix run "${TOOL:-$TOOL_DEFAULT}" -- \
             discover --rules "$RULES" --flake . --systems "$systems" --attr "$ATTR" --workers "${WORKERS:-2}"
-
+      - name: Post-discovery hook
+        id: post-discovery
+        if: ${{ inputs.post-discovery != '' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.post-discovery }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
   Build:
     needs: Discover
     if: ${{ needs.Discover.outputs.chunks != '' && needs.Discover.outputs.chunks != '[]' }}
@@ -204,12 +261,17 @@ jobs:
       rules: ${{ inputs.rules }}
       install-command: ${{ inputs.install-command }}
       extra-conf: ${{ inputs.extra-conf }}
+      pre-run: ${{ inputs.pre-run }}
+      post-run: ${{ inputs.post-run }}
+      pre-build: ${{ inputs.pre-build }}
+      post-build: ${{ inputs.post-build }}
+      pre-cache: ${{ inputs.pre-cache }}
+      post-cache: ${{ inputs.post-cache }}
     secrets:
       ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
       NIKS3_TOKEN: ${{ secrets.NIKS3_TOKEN }}
-
   Skip:
     needs: Discover
     if: ${{ needs.Discover.outputs.skipped != '' && needs.Discover.outputs.skipped != '[]' && github.event.pull_request.head.repo.fork != true }}
