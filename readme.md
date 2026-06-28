@@ -280,7 +280,26 @@ settings will not take effect.
 
 ## Hooks
 
-For each stage (`build`, `push-to-cache`)
+For discover stage and each stage in build (`build` and `cache`) you can run
+custom hooks. They can be specified with following inputs, ordered by execution
+sequence (string argument, empty by default):
+
+- pre/post-discover
+
++++ Individual config build job begin +++
+
+- setup
+- pre/post-build
+- pre/post-cache
+- teardown
+
++++ Individual config build job end +++
+
+For individual jobs, the sequence is fixed but across multiple parallel config build
+jobs the order is not deterministic. Post-\<X\> are run regardless pre-\<X\> is
+successful or not. But in post-\<X\> you can know whether pre-<X> is successful
+or not by checking the environment variable PRESCRIPT_SUCCESSFUL. Same for setup and
+teardown.
 
 ### Fork it (alternative)
 
