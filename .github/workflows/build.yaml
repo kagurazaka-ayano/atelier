@@ -39,12 +39,12 @@ on:
         required: false
         default: ""
         type: string
-      pre-run:
-        description: Script to be executed before all run except for eval failed tasks
+      setup:
+        description: Script to be executed before all tasks
         required: false
         default: ""
         type: string
-      post-run:
+      teardown:
         description: Script to be executed after all steps are done
         required: false
         default: ""
@@ -113,12 +113,12 @@ jobs:
           printf '%s\n' "${EVAL_ERROR}"
           exit 1
 
-      - name: Pre-run hook
-        id: pre-run
-        if: ${{ inputs.pre-run != '' }}
+      - name: Setup hook
+        id: setup
+        if: ${{ inputs.setup != '' }}
         shell: bash
         env:
-          SCRIPT: ${{ inputs.pre-run }}
+          SCRIPT: ${{ inputs.setup }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
@@ -150,17 +150,18 @@ jobs:
           set -o pipefail
           nix build "${INSTALLABLE}^*" --no-link --print-build-logs 2>&1 | tee build.log
       - name: Post-build hook
-        if: ${{ inputs.post-build != '' && steps.pre-build.outcome == 'success' }}
+        if: ${{ inputs.post-build != '' }}
         shell: bash
         env:
           SCRIPT: ${{ inputs.post-build }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-build.outcome == "success" }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
 
       - name: Pre-cache hook
         id: pre-cache
-        if: ${{ inputs.pre-cache != '' }}
+        if: ${{ inputs.pre-cache != '' && inputs.push && matrix.installable != '' && github.event.pull_request.head.repo.fork != true && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '' || vars.NIKS3_SERVER != '') }}
         shell: bash
         env:
           SCRIPT: ${{ inputs.pre-cache }}
@@ -265,18 +266,20 @@ jobs:
             [ $? -eq 0 ] || echo "::warning::niks3 push failed"
           fi
       - name: post-cache hook
-        if: ${{ inputs.post-cache != '' && steps.pre-cache.outcome == 'success' }}
+        if: ${{ inputs.post-cache != '' }}
         shell: bash
         env:
           SCRIPT: ${{ inputs.post-cache }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-cache.outcome == "success" }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
-      - name: Post-run hook
-        if: ${{ inputs.post-run != '' && steps.pre-run.outcome == 'success'}}
+      - name: Teardown hook
+        if: ${{ inputs.teardown != '' }}
         shell: bash
         env:
-          SCRIPT: ${{ inputs.post-run }}
+          SCRIPT: ${{ inputs.teardown }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.setup.outcome == "success" }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"

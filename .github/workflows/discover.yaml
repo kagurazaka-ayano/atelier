@@ -53,23 +53,13 @@ on:
         description: Extra nix.conf lines appended after the required settings
         type: string
         default: ""
-      pre-discovery:
-        description: Script to be run before running config discovery
+      pre-discover:
+        description: Script to be run before running config discover
         required: false
         default: ""
         type: string
-      post-discovery:
-        description: Script to be run after running config discovery
-        required: false
-        default: ""
-        type: string
-      pre-run:
-        description: Script to be executed before all run except for eval failed tasks
-        required: false
-        default: ""
-        type: string
-      post-run:
-        description: Script to be executed after all steps are done
+      post-discover:
+        description: Script to be run after running config discover
         required: false
         default: ""
         type: string
@@ -172,13 +162,12 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-
-      - name: Pre-discovery hook
-        id: pre-discovery
-        if: ${{ inputs.pre-discovery != '' }}
+      - name: Pre-discover hook
+        id: pre-discover
+        if: ${{ inputs.pre-discover != '' }}
         shell: bash
         env:
-          SCRIPT: ${{ inputs.pre-discovery }}
+          SCRIPT: ${{ inputs.pre-discover }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
@@ -228,15 +217,16 @@ jobs:
 
           nix run "${TOOL:-$TOOL_DEFAULT}" -- \
             discover --rules "$RULES" --flake . --systems "$systems" --attr "$ATTR" --workers "${WORKERS:-2}"
-      - name: Post-discovery hook
-        id: post-discovery
-        if: ${{ inputs.post-discovery != '' }}
+      - name: Post-discover hook
+        id: post-discover
+        if: ${{ inputs.post-discover != '' }}
         shell: bash
         env:
-          SCRIPT: ${{ inputs.post-discovery }}
+          SCRIPT: ${{ inputs.post-discover }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
+
   Build:
     needs: Discover
     if: ${{ needs.Discover.outputs.chunks != '' && needs.Discover.outputs.chunks != '[]' }}
