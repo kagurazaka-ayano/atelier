@@ -39,6 +39,37 @@ on:
         required: false
         default: ""
         type: string
+      pre-run:
+        description: Script to be executed before all run except for eval failed tasks
+        required: false
+        default: ""
+        type: string
+      post-run:
+        description: Script to be executed after all steps are done
+        required: false
+        default: ""
+        type: string
+      pre-build:
+        description: Script to be executed before every build job
+        required: false
+        default: ""
+        type: string
+      post-build:
+        description: Script to be executed after done building
+        required: false
+        default: ""
+        type: string
+      pre-cache:
+        description: Script to be executed before pushing to cache
+        required: false
+        default: ""
+        type: string
+      post-cache:
+        description: Script to be executed after done pushing to cache
+        required: false
+        default: ""
+        type: string
+
     secrets:
       ATTIC_TOKEN:
         required: false
@@ -82,6 +113,16 @@ jobs:
           printf '%s\n' "${EVAL_ERROR}"
           exit 1
 
+      - name: Pre-run hook
+        id: pre-run
+        if: ${{ inputs.pre-run != '' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.pre-run }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
+
       - name: Set Up Nix
         if: ${{ matrix.installable != '' }}
         uses: jenseng/dynamic-uses@d683d56bffbc1f36158989b5fc62288697aae27b # 2025-12-18
@@ -93,13 +134,39 @@ jobs:
             extra-conf: ${{ toJSON(inputs.extra-conf) }}
             rules: ${{ toJSON(inputs.rules) }}
 
+      - name: Pre-build hook
+        id: pre-build
+        if: ${{ inputs.pre-build != '' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.pre-build }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
       - name: Build
         if: ${{ matrix.installable != '' }}
         shell: bash
         run: |
           set -o pipefail
           nix build "${INSTALLABLE}^*" --no-link --print-build-logs 2>&1 | tee build.log
+      - name: Post-build hook
+        if: ${{ inputs.post-build != '' && steps.pre-build.outcome == 'success' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.post-build }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
 
+      - name: Pre-cache hook
+        id: pre-cache
+        if: ${{ inputs.pre-cache != '' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.pre-cache }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
       - name: Push To Cache
         if: ${{ inputs.push && matrix.installable != '' && github.event.pull_request.head.repo.fork != true && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '' || vars.NIKS3_SERVER != '') }}
         shell: bash
@@ -197,7 +264,22 @@ jobs:
             # shellcheck disable=SC2181
             [ $? -eq 0 ] || echo "::warning::niks3 push failed"
           fi
-
+      - name: post-cache hook
+        if: ${{ inputs.post-cache != '' && steps.pre-cache.outcome == 'success' }}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.post-cache }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
+      - name: Post-run hook
+        if: ${{ inputs.post-run != '' && steps.pre-run.outcome == 'success'}}
+        shell: bash
+        env:
+          SCRIPT: ${{ inputs.post-run }}
+        run: |
+          set -euo pipefail
+          bash -c "${SCRIPT}"
       - name: Upload Log
         if: ${{ always() && matrix.installable != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
