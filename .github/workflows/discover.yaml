@@ -53,46 +53,6 @@ on:
         description: Extra nix.conf lines appended after the required settings
         type: string
         default: ""
-      setup:
-        description: Script to be executed before all tasks
-        required: false
-        default: ""
-        type: string
-      teardown:
-        description: Script to be executed after all steps are done
-        required: false
-        default: ""
-        type: string
-      pre-discover:
-        description: Script to be run before running config discover
-        required: false
-        default: ""
-        type: string
-      post-discover:
-        description: Script to be run after running config discover
-        required: false
-        default: ""
-        type: string
-      pre-build:
-        description: Script to be executed before every build job
-        required: false
-        default: ""
-        type: string
-      post-build:
-        description: Script to be executed after done building
-        required: false
-        default: ""
-        type: string
-      pre-cache:
-        description: Script to be executed before pushing to cache
-        required: false
-        default: ""
-        type: string
-      post-cache:
-        description: Script to be executed after done pushing to cache
-        required: false
-        default: ""
-        type: string
   # downstream repos consume atelier by calling this workflow; the inputs mirror
   # workflow_dispatch so the generate step reads them the same way
   workflow_call:
@@ -144,6 +104,46 @@ on:
         description: Extra nix.conf lines appended after the required settings
         type: string
         default: ""
+      setup:
+        description: Script to be executed before all tasks
+        required: false
+        default: ""
+        type: string
+      teardown:
+        description: Script to be executed after all steps are done
+        required: false
+        default: ""
+        type: string
+      pre-discover:
+        description: Script to be run before running config discover
+        required: false
+        default: ""
+        type: string
+      post-discover:
+        description: Script to be run after running config discover
+        required: false
+        default: ""
+        type: string
+      pre-build:
+        description: Script to be executed before every build job
+        required: false
+        default: ""
+        type: string
+      post-build:
+        description: Script to be executed after done building
+        required: false
+        default: ""
+        type: string
+      pre-cache:
+        description: Script to be executed before pushing to cache
+        required: false
+        default: ""
+        type: string
+      post-cache:
+        description: Script to be executed after done pushing to cache
+        required: false
+        default: ""
+        type: string
     secrets:
       ATTIC_TOKEN:
         required: false
