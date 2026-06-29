@@ -53,6 +53,16 @@ on:
         description: Extra nix.conf lines appended after the required settings
         type: string
         default: ""
+      setup:
+        description: Script to be executed before all tasks
+        required: false
+        default: ""
+        type: string
+      teardown:
+        description: Script to be executed after all steps are done
+        required: false
+        default: ""
+        type: string
       pre-discover:
         description: Script to be run before running config discover
         required: false
@@ -223,7 +233,7 @@ jobs:
         shell: bash
         env:
           SCRIPT: ${{ inputs.post-discover }}
-          PRESCRIPT_SUCCESSFUL: ${{ steps.setup.post-discover == 'success' }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-discover.outcome == 'success' }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
@@ -252,8 +262,8 @@ jobs:
       rules: ${{ inputs.rules }}
       install-command: ${{ inputs.install-command }}
       extra-conf: ${{ inputs.extra-conf }}
-      pre-run: ${{ inputs.pre-run }}
-      post-run: ${{ inputs.post-run }}
+      setup: ${{ inputs.setup }}
+      teardown: ${{ inputs.teardown }}
       pre-build: ${{ inputs.pre-build }}
       post-build: ${{ inputs.post-build }}
       pre-cache: ${{ inputs.pre-cache }}
