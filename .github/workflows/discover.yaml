@@ -223,6 +223,7 @@ jobs:
         shell: bash
         env:
           SCRIPT: ${{ inputs.post-discover }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.setup.post-discover == 'success' }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"

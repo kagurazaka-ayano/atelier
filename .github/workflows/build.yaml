@@ -154,7 +154,7 @@ jobs:
         shell: bash
         env:
           SCRIPT: ${{ inputs.post-build }}
-          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-build.outcome == "success" }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-build.outcome == 'success' }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
@@ -270,7 +270,7 @@ jobs:
         shell: bash
         env:
           SCRIPT: ${{ inputs.post-cache }}
-          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-cache.outcome == "success" }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.pre-cache.outcome == 'success' }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
@@ -279,7 +279,7 @@ jobs:
         shell: bash
         env:
           SCRIPT: ${{ inputs.teardown }}
-          PRESCRIPT_SUCCESSFUL: ${{ steps.setup.outcome == "success" }}
+          PRESCRIPT_SUCCESSFUL: ${{ steps.setup.outcome == 'success' }}
         run: |
           set -euo pipefail
           bash -c "${SCRIPT}"
